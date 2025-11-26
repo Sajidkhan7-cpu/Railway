@@ -2,17 +2,16 @@ import React, { useState } from "react";
 import { Mail, Lock, User, Eye, EyeOff } from "lucide-react";
 import "./App.css";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "../supabaseClient";   // <-- Supabase import
 import images from "./images.png";
 
-// Dual-mode auth screen: handles both login and sign-up flows.
 export default function Login() {
   const navigate = useNavigate();
 
-  // UI toggles for auth mode and password visibility.
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  // Form state shared across login and registration modes.
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -20,20 +19,50 @@ export default function Login() {
     confirmPassword: "",
   });
 
-  // Submit handler performs minimal validation and fake navigation.
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
-    if (isLogin) {
-      alert("Login successful!");
-      navigate("/dashboard");   // <-- redirect to Dashboard
-    } else {
-      alert("Account created!");
-      setIsLogin(true);
+    if (!isLogin) {
+      if (formData.password !== formData.confirmPassword) {
+        alert("Passwords do not match");
+        setLoading(false);
+        return;
+      }
+    }
+
+    try {
+      if (isLogin) {
+        // 🔑 LOGIN
+        const { error } = await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password,
+        });
+
+        if (error) throw error;
+        navigate("/dashboard");
+      } else {
+        // ✨ SIGN UP
+        const { error } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            data: { full_name: formData.name },
+          },
+        });
+
+        if (error) throw error;
+
+        alert("Account created successfully! Please login.");
+        setIsLogin(true);
+      }
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Generic change handler for all text inputs.
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -45,15 +74,9 @@ export default function Login() {
 
       <div className="auth-wrapper">
         <div className="auth-card">
-          {/* Hero/branding area */}
           <div className="auth-header">
-             {/* 🔥 Add Logo Here */}
             <div className="logo-container">
-              <img 
-                src={images} 
-                alt="Logo"
-                className="login-logo"
-              />
+              <img src={images} alt="Logo" className="login-logo" />
             </div>
             <h1>{isLogin ? "Welcome Back!" : "Create Account"}</h1>
             <p>
@@ -63,11 +86,10 @@ export default function Login() {
             </p>
           </div>
 
-          {/* Form container */}
           <div className="auth-form">
             <form onSubmit={handleSubmit}>
+              {/* Name for Sign Up only */}
               {!isLogin && (
-                // Registration-only full name field.
                 <div className="form-group">
                   <label>Full Name</label>
                   <div className="input-container">
@@ -78,12 +100,13 @@ export default function Login() {
                       value={formData.name}
                       onChange={handleChange}
                       placeholder="John Doe"
+                      required={!isLogin}
                     />
                   </div>
                 </div>
               )}
 
-              {/* Email input */}
+              {/* Email */}
               <div className="form-group">
                 <label>Email Address</label>
                 <div className="input-container">
@@ -94,11 +117,12 @@ export default function Login() {
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="you@example.com"
+                    required
                   />
                 </div>
               </div>
 
-              {/* Password input plus show/hide toggle */}
+              {/* Password */}
               <div className="form-group">
                 <label>Password</label>
                 <div className="input-container">
@@ -109,6 +133,7 @@ export default function Login() {
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="••••••••"
+                    required
                   />
                   <button
                     type="button"
@@ -120,8 +145,8 @@ export default function Login() {
                 </div>
               </div>
 
+              {/* Confirm Password for Sign Up only */}
               {!isLogin && (
-                // Only visible during sign-up.
                 <div className="form-group">
                   <label>Confirm Password</label>
                   <div className="input-container">
@@ -132,27 +157,32 @@ export default function Login() {
                       value={formData.confirmPassword}
                       onChange={handleChange}
                       placeholder="••••••••"
+                      required
                     />
                   </div>
                 </div>
               )}
 
               {isLogin && (
-                // Quick actions for login mode.
                 <div className="login-options">
                   <label className="remember-me">
                     <input type="checkbox" /> Remember me
                   </label>
-                  <button className="forgot-btn">Forgot password?</button>
+                  <button type="button" className="forgot-btn">
+                    Forgot password?
+                  </button>
                 </div>
               )}
 
-              <button className="submit-btn" type="submit">
-                {isLogin ? "Sign In" : "Create Account"}
+              <button className="submit-btn" type="submit" disabled={loading}>
+                {loading
+                  ? "Please wait..."
+                  : isLogin
+                  ? "Sign In"
+                  : "Create Account"}
               </button>
             </form>
 
-            {/* Switch between login and registration */}
             <div className="toggle-login">
               <span>
                 {isLogin
