@@ -1,6 +1,7 @@
 {
   "name": "railway-project",
   "version": "0.1.0",
+  "homepage": "https://sajidkhan7-cpu.github.io/Railway/",
   "private": true,
   "dependencies": {
     "@supabase/supabase-js": "^2.84.0",
