@@ -12,7 +12,8 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isResetMode, setIsResetMode] = useState(false);
-  const [user, setuser] = useState(null);
+  const [user] = useState(null);
+
 
   const [formData, setFormData] = useState({
     name: "",
