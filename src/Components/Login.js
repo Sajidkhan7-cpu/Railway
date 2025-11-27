@@ -26,7 +26,7 @@ export default function Login() {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate("/dashboard");
     });
-  }, []);
+  }, [user, navigate]);
 
   // Detect password reset link
   useEffect(() => {
