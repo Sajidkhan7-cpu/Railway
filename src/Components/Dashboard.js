@@ -28,7 +28,7 @@ export default function RailwayMitraSahyog() {
     { id: 'inspection', name: 'Inspection Page', icon: ClipboardCheck },
     { id: 'warranty', name: 'Warranty Claims', icon: FileText },
     { id: 'user', name: 'User Management', icon: Users }
-  ];
+  ]; 
 
   // Reference data for depot filters and mock datasets below.
   const depots = ['All Depots', 'Mumbai Central', 'Delhi Junction', 'Kolkata Station', 'Chennai Depot'];
@@ -980,4 +980,4 @@ export default function RailwayMitraSahyog() {
       )}
     </div>
   );
-} 
+}

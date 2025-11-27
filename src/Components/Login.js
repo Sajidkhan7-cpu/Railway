@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Mail, Lock, User, Eye, EyeOff } from "lucide-react";
 import "./App.css";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "../supabaseClient";   // <-- Supabase import
+import { supabase } from "../supabaseClient";
 import images from "./images.png";
 
 export default function Login() {
@@ -11,27 +11,50 @@ export default function Login() {
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isResetMode, setIsResetMode] = useState(false); // reset password screen
 
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
     confirmPassword: "",
+    newPassword: "",
   });
+
+  // Detect Supabase password reset link
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash.includes("type=recovery")) {
+      setIsResetMode(true);
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
-    if (!isLogin) {
-      if (formData.password !== formData.confirmPassword) {
-        alert("Passwords do not match");
-        setLoading(false);
+    try {
+      if (isResetMode) {
+        // 🔁 Update password after reset link
+        const { error } = await supabase.auth.updateUser({
+          password: formData.newPassword,
+        });
+
+        if (error) throw error;
+
+        alert("Password reset successful! Please log in again.");
+        window.location.href = "/"; // redirect to login
         return;
       }
-    }
 
-    try {
+      if (!isLogin) {
+        if (formData.password !== formData.confirmPassword) {
+          alert("Passwords do not match");
+          setLoading(false);
+          return;
+        }
+      }
+
       if (isLogin) {
         // 🔑 LOGIN
         const { error } = await supabase.auth.signInWithPassword({
@@ -46,13 +69,10 @@ export default function Login() {
         const { error } = await supabase.auth.signUp({
           email: formData.email,
           password: formData.password,
-          options: {
-            data: { full_name: formData.name },
-          },
+          options: { data: { full_name: formData.name } },
         });
 
         if (error) throw error;
-
         alert("Account created successfully! Please login.");
         setIsLogin(true);
       }
@@ -63,9 +83,30 @@ export default function Login() {
     }
   };
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleForgotPassword = async () => {
+    if (!formData.email) {
+      alert("Please enter your email first.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        formData.email,
+        {
+          redirectTo: window.location.origin + "/#type=recovery",
+        }
+      );
+      if (error) throw error;
+      alert("Password reset email sent! Check your inbox.");
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const handleChange = (e) =>
+    setFormData({ ...formData, [e.target.name]: e.target.value });
 
   return (
     <div className="auth-bg">
@@ -78,17 +119,48 @@ export default function Login() {
             <div className="logo-container">
               <img src={images} alt="Logo" className="login-logo" />
             </div>
-            <h1>{isLogin ? "Welcome Back!" : "Create Account"}</h1>
+
+            <h1>
+              {isResetMode
+                ? "Reset Password"
+                : isLogin
+                ? "Welcome Back!"
+                : "Create Account"}
+            </h1>
             <p>
-              {isLogin
+              {isResetMode
+                ? "Enter your new password"
+                : isLogin
                 ? "Sign in to continue your journey"
                 : "Join us and start your adventure"}
             </p>
           </div>
 
-          <div className="auth-form">
+          {/* RESET PASSWORD SCREEN */}
+          {isResetMode ? (
             <form onSubmit={handleSubmit}>
-              {/* Name for Sign Up only */}
+              <div className="form-group">
+                <label>New Password</label>
+                <div className="input-container">
+                  <Lock className="input-icon" />
+                  <input
+                    type="password"
+                    name="newPassword"
+                    value={formData.newPassword}
+                    onChange={handleChange}
+                    placeholder="New password"
+                    required
+                  />
+                </div>
+              </div>
+
+              <button type="submit" className="submit-btn" disabled={loading}>
+                {loading ? "Updating..." : "Update Password"}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleSubmit}>
+              {/* Name for Sign Up */}
               {!isLogin && (
                 <div className="form-group">
                   <label>Full Name</label>
@@ -100,7 +172,7 @@ export default function Login() {
                       value={formData.name}
                       onChange={handleChange}
                       placeholder="John Doe"
-                      required={!isLogin}
+                      required
                     />
                   </div>
                 </div>
@@ -145,7 +217,7 @@ export default function Login() {
                 </div>
               </div>
 
-              {/* Confirm Password for Sign Up only */}
+              {/* Confirm Password for Signup */}
               {!isLogin && (
                 <div className="form-group">
                   <label>Confirm Password</label>
@@ -163,18 +235,23 @@ export default function Login() {
                 </div>
               )}
 
+              {/* Remember + Forgot Password */}
               {isLogin && (
                 <div className="login-options">
                   <label className="remember-me">
                     <input type="checkbox" /> Remember me
                   </label>
-                  <button type="button" className="forgot-btn">
+                  <button
+                    type="button"
+                    className="forgot-btn"
+                    onClick={handleForgotPassword}
+                  >
                     Forgot password?
                   </button>
                 </div>
               )}
 
-              <button className="submit-btn" type="submit" disabled={loading}>
+              <button type="submit" className="submit-btn" disabled={loading}>
                 {loading
                   ? "Please wait..."
                   : isLogin
@@ -182,7 +259,10 @@ export default function Login() {
                   : "Create Account"}
               </button>
             </form>
+          )}
 
+          {/* TOGGLE SIGNUP / LOGIN */}
+          {!isResetMode && (
             <div className="toggle-login">
               <span>
                 {isLogin
@@ -193,7 +273,7 @@ export default function Login() {
                 {isLogin ? "Sign up" : "Sign in"}
               </button>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
