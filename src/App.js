@@ -4,7 +4,7 @@ import Dashboard from "./Components/Dashboard";
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/Railway">
       <Routes>
         {/* Default route → Login */}
         <Route path="/" element={<Login />} />
