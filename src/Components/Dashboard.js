@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { Menu, X, User, Package, MapPin, RefreshCw, ClipboardCheck, FileText, Users, Home, TrendingUp, Activity, AlertTriangle, Search, Filter } from 'lucide-react';
+import { Menu, User, X, Package, MapPin, RefreshCw, ClipboardCheck, FileText, Users, Home, TrendingUp, Activity, AlertTriangle, Search, Filter } from 'lucide-react';
 import './Dashboard.css'
 import images from "./images.png";
+import AccountMenu from "./Accountmenu";
+
 // Primary dashboard shell that orchestrates every view and interaction.
 export default function RailwayMitraSahyog() {
   // View-layer state for navigation, filters, and contextual modals.
@@ -869,7 +871,7 @@ export default function RailwayMitraSahyog() {
               />
 
             </div>
-            <h1 className="app-title">Railway Mitra Sahyog</h1>
+            <h1 className="app-title">Railway Help</h1>
           </div>
           <button 
             onClick={() => setShowAccountMenu(!showAccountMenu)}
@@ -878,56 +880,10 @@ export default function RailwayMitraSahyog() {
             <User size={24} />
             <span>Account</span>
           </button>
-          
-          {/* Account popover with quick profile shortcuts */}
           {showAccountMenu && (
-            <div className="account-menu">
-              <div className="account-menu-header">
-                <div className="account-avatar">
-                  JD
-                </div>
-                <div className="account-info">
-                  <p className="account-name">John Doe</p>
-                  <p className="account-email">john.doe@railway.gov.in</p>
-                  <p className="account-role">Railway Inspector</p>
-                </div>
-              </div>
-              <div className="account-menu-body">
-                <button className="account-menu-item">
-                  <div className="menu-item-icon">
-                    <User size={18} />
-                  </div>
-                  <span className="menu-item-text">Profile Settings</span>
-                </button>
-                <button className="account-menu-item">
-                  <div className="menu-item-icon">
-                    <svg className="icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <span className="menu-item-text">Change Email</span>
-                </button>
-                <button className="account-menu-item">
-                  <div className="menu-item-icon">
-                    <svg className="icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                    </svg>
-                  </div>
-                  <span className="menu-item-text">Contact Details</span>
-                </button>
-              </div>
-              <div className="account-menu-footer">
-                <button className="logout-button">
-                  <div className="menu-item-icon logout-icon">
-                    <svg className="icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                  </div>
-                  <span>Logout</span>
-                </button>
-              </div>
-            </div>
+            <AccountMenu onClose={() => setShowAccountMenu(false)} />
           )}
+          
         </div>
       </header>
 
