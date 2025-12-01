@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Menu, User, X, Package, MapPin, RefreshCw, ClipboardCheck, FileText, Users, Home, TrendingUp, Activity, AlertTriangle, Search, Filter } from 'lucide-react';
 import './Dashboard.css'
 import images from "./images.png";
 import AccountMenu from "./Accountmenu";
+import { supabase } from "../supabaseClient";
 
 // Primary dashboard shell that orchestrates every view and interaction.
 export default function RailwayMitraSahyog() {
@@ -21,6 +22,87 @@ export default function RailwayMitraSahyog() {
   const [filterSeverity, setFilterSeverity] = useState('');
   const [filterInspector, setFilterInspector] = useState('');
 
+  // Supabase Data States
+  const [alerts, setAlerts] = useState([]);
+  const [events, setEvents] = useState([]);
+  const [inspections, setInspections] = useState([]);
+  const [assets, setAssets] = useState([]);
+  const [receipts, setReceipts] = useState([]);
+  const [warrantyClaims, setWarrantyClaims] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { data: alertsData, error: alertsError } = await supabase
+        .from('alerts')
+        .select('*');
+      if (alertsError) throw alertsError;
+
+      const { data: eventsData, error: eventsError } = await supabase
+        .from('events')
+        .select('*');
+      if (eventsError) throw eventsError;
+
+      // Fetch inspections with aliases to match UI expectations
+      const { data: inspectionsData, error: inspectionsError } = await supabase
+        .from('inspections')
+        .select('*, assetId:asset_id, photos:photos_count');
+      if (inspectionsError) throw inspectionsError;
+
+      // Fetch assets with aliases to match UI expectations
+      const { data: assetsData, error: assetsError } = await supabase
+        .from('assets')
+        .select('*, partType:part_type, manufacture:manufacture_date, received:received_date, installed:install_date, installDate:install_date');
+      if (assetsError) throw assetsError;
+
+      const { data: receiptsData, error: receiptsError } = await supabase
+        .from('receipts')
+        .select('*');
+      if (receiptsError) throw receiptsError;
+
+      const { data: warrantyData, error: warrantyError } = await supabase
+        .from('warranty_claims')
+        .select('*, assetId:asset_id, vendorResponse:vendor_response');
+      if (warrantyError) throw warrantyError;
+
+      if (alertsData) setAlerts(alertsData);
+      if (eventsData) setEvents(eventsData);
+      if (inspectionsData) setInspections(inspectionsData);
+      if (assetsData) setAssets(assetsData);
+      if (receiptsData) setReceipts(receiptsData);
+      if (warrantyData) setWarrantyClaims(warrantyData);
+
+      console.log("Fetched Data:", { alertsData, eventsData, inspectionsData, assetsData, receiptsData, warrantyData });
+
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      setError(error.message || "Failed to fetch data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Helper to safely render potentially complex data types
+  const safeRender = (value) => {
+    if (value === null || value === undefined) return '-';
+    if (typeof value === 'object') {
+      try {
+        return JSON.stringify(value);
+      } catch (e) {
+        return 'Invalid Data';
+      }
+    }
+    return String(value);
+  };
+
   // Sidebar menu definition used to drive navigation items and icons.
   const menuItems = [
     { id: 'home', name: 'Home', icon: Home },
@@ -30,76 +112,17 @@ export default function RailwayMitraSahyog() {
     { id: 'inspection', name: 'Inspection Page', icon: ClipboardCheck },
     { id: 'warranty', name: 'Warranty Claims', icon: FileText },
     { id: 'user', name: 'User Management', icon: Users }
-  ]; 
+  ];
 
   // Reference data for depot filters and mock datasets below.
   const depots = ['All Depots', 'Mumbai Central', 'Delhi Junction', 'Kolkata Station', 'Chennai Depot'];
-  
-  // Depot-specific asset catalog used in the inventory table.
-  const assetList = [
-    { id: 'AST001', name: 'Signal Controller', status: 'Active', location: 'Mumbai Central' },
-    { id: 'AST002', name: 'Track Sensor', status: 'Maintenance', location: 'Delhi Junction' },
-    { id: 'AST003', name: 'Power Module', status: 'Active', location: 'Kolkata Station' },
-    { id: 'AST004', name: 'Safety Switch', status: 'Active', location: 'Chennai Depot' },
-  ];
-
-  // Mock CRN/GRN trail for goods movement.
-  const crnHistory = [
-    { id: 'CRN001', date: '2025-11-15', items: 45, value: '₹2,45,000' },
-    { id: 'GRN002', date: '2025-11-10', items: 32, value: '₹1,89,500' },
-    { id: 'CRN003', date: '2025-11-05', items: 28, value: '₹1,56,000' },
-  ];
-
-  // Deep-dive table backing the inventory detail grid.
-  const inventoryItems = [
-    { partType: 'Signal Controller', vendor: 'TechRail Inc', batch: 'B2025-01', quantity: 150, warranty: '3 Years' },
-    { partType: 'Track Sensor', vendor: 'SafeTrack Ltd', batch: 'B2025-02', quantity: 200, warranty: '2 Years' },
-    { partType: 'Power Module', vendor: 'PowerTech Co', batch: 'B2025-03', quantity: 85, warranty: '5 Years' },
-    { partType: 'Safety Switch', vendor: 'SecureRail', batch: 'B2025-04', quantity: 120, warranty: '4 Years' },
-  ];
-
-  // Timeline checkpoints per asset for lifecycle visualization.
-  const lifecycleData = [
-    { asset: 'Signal Controller', manufacture: '2024-08-15', received: '2024-09-01', installed: '2024-09-15', status: 'Operational' },
-    { asset: 'Track Sensor', manufacture: '2024-07-20', received: '2024-08-05', installed: '2024-08-20', status: 'Operational' },
-    { asset: 'Power Module', manufacture: '2024-09-10', received: '2024-09-25', installed: '2024-10-10', status: 'Under Maintenance' },
-  ];
 
   // Static list of schematic track segments.
   const trackSections = ['Section A', 'Section B', 'Section C', 'Section D'];
-  
-  // Asset instances displayed for the selected track section.
-  const sectionAssets = [
-    { id: 'AST101', name: 'Signal Controller', installDate: '2024-09-15', location: 'KM 45.2' },
-    { id: 'AST102', name: 'Track Sensor', installDate: '2024-08-20', location: 'KM 47.8' },
-    { id: 'AST103', name: 'Power Module', installDate: '2024-10-10', location: 'KM 50.1' },
-  ];
-
-  // Recent inspections per track segment for quick history.
-  const inspectionLogs = [
-    { date: '2025-11-20', inspector: 'John Doe', assetId: 'AST101', status: 'Pass', notes: 'All systems normal' },
-    { date: '2025-11-18', inspector: 'Jane Smith', assetId: 'AST102', status: 'Warning', notes: 'Minor adjustment needed' },
-    { date: '2025-11-15', inspector: 'Bob Wilson', assetId: 'AST103', status: 'Pass', notes: 'Operating within specs' },
-  ];
-
-  // Master inspection dataset consumed by filters on the inspection page.
-  const inspectionRecords = [
-    { id: 'INS001', date: '2025-11-20', assetId: 'AST101', vendor: 'TechRail Inc', severity: 'Low', inspector: 'John Doe', status: 'Completed', photos: 3 },
-    { id: 'INS002', date: '2025-11-18', assetId: 'AST102', vendor: 'SafeTrack Ltd', severity: 'Medium', inspector: 'Jane Smith', status: 'Completed', photos: 5 },
-    { id: 'INS003', date: '2025-11-15', assetId: 'AST103', vendor: 'PowerTech Co', severity: 'Low', inspector: 'Bob Wilson', status: 'Completed', photos: 2 },
-    { id: 'INS004', date: '2025-11-12', assetId: 'AST104', vendor: 'SecureRail', severity: 'High', inspector: 'Alice Brown', status: 'Pending', photos: 4 },
-  ];
-
-  // Warranty claim register powering the claims table.
-  const warrantyClaims = [
-    { id: 'CLM001', date: '2025-11-15', assetId: 'AST102', vendor: 'SafeTrack Ltd', issue: 'Sensor malfunction', status: 'Under Review', response: 'Pending' },
-    { id: 'CLM002', date: '2025-11-10', assetId: 'AST105', vendor: 'TechRail Inc', issue: 'Power failure', status: 'Approved', response: 'Replacement approved' },
-    { id: 'CLM003', date: '2025-11-05', assetId: 'AST107', vendor: 'PowerTech Co', issue: 'Circuit board issue', status: 'Rejected', response: 'Outside warranty period' },
-  ];
 
   // Resolve which dashboard subsection to render based on sidebar state.
   const renderContent = () => {
-    switch(activeSection) {
+    switch (activeSection) {
       case 'home':
         // Home view: high-level KPIs and analytics.
         return (
@@ -115,7 +138,7 @@ export default function RailwayMitraSahyog() {
                   </div>
                   <div>
                     <p className="stat-label">Total Assets Installed</p>
-                    <p className="stat-value">2,847</p>
+                    <p className="stat-value">{assets.length}</p>
                   </div>
                 </div>
               </div>
@@ -127,7 +150,7 @@ export default function RailwayMitraSahyog() {
                   </div>
                   <div>
                     <p className="stat-label">In Depot</p>
-                    <p className="stat-value">342</p>
+                    <p className="stat-value">{assets.filter(a => a.location === 'Depot').length}</p>
                   </div>
                 </div>
               </div>
@@ -139,7 +162,7 @@ export default function RailwayMitraSahyog() {
                   </div>
                   <div>
                     <p className="stat-label">Today's Scan</p>
-                    <p className="stat-value">156</p>
+                    <p className="stat-value">{inspections.filter(i => i.date === new Date().toISOString().split('T')[0]).length}</p>
                   </div>
                 </div>
               </div>
@@ -151,7 +174,7 @@ export default function RailwayMitraSahyog() {
                   </div>
                   <div>
                     <p className="stat-label">Active Alerts</p>
-                    <p className="stat-value">23</p>
+                    <p className="stat-value">{alerts.length}</p>
                   </div>
                 </div>
               </div>
@@ -165,7 +188,7 @@ export default function RailwayMitraSahyog() {
                   </div>
                   <div>
                     <p className="stat-label">Vendor Failures</p>
-                    <p className="stat-value">8</p>
+                    <p className="stat-value">{events.filter(e => e.type === 'Failure').length}</p>
                   </div>
                 </div>
               </div>
@@ -177,7 +200,7 @@ export default function RailwayMitraSahyog() {
                   </div>
                   <div>
                     <p className="stat-label">Sync Errors</p>
-                    <p className="stat-value">5</p>
+                    <p className="stat-value">0</p>
                   </div>
                 </div>
               </div>
@@ -189,15 +212,15 @@ export default function RailwayMitraSahyog() {
               <div className="status-grid">
                 <div className="status-item status-blue">
                   <p className="status-label">Operational</p>
-                  <p className="status-value">2,505</p>
+                  <p className="status-value">{assets.filter(a => a.status === 'Operational').length}</p>
                 </div>
                 <div className="status-item status-orange">
                   <p className="status-label">Under Maintenance</p>
-                  <p className="status-value">187</p>
+                  <p className="status-value">{assets.filter(a => a.status === 'Maintenance').length}</p>
                 </div>
                 <div className="status-item status-red">
                   <p className="status-label">Decommissioned</p>
-                  <p className="status-value">155</p>
+                  <p className="status-value">{assets.filter(a => a.status === 'Decommissioned').length}</p>
                 </div>
               </div>
             </div>
@@ -217,12 +240,12 @@ export default function RailwayMitraSahyog() {
                   </div>
                   <div className="chart-container chart-blue">
                     <div className="bar-chart">
-                      <div className="bar" style={{height: '50%'}}></div>
-                      <div className="bar" style={{height: '65%'}}></div>
-                      <div className="bar" style={{height: '45%'}}></div>
-                      <div className="bar" style={{height: '80%'}}></div>
-                      <div className="bar" style={{height: '70%'}}></div>
-                      <div className="bar" style={{height: '90%'}}></div>
+                      <div className="bar" style={{ height: '50%' }}></div>
+                      <div className="bar" style={{ height: '65%' }}></div>
+                      <div className="bar" style={{ height: '45%' }}></div>
+                      <div className="bar" style={{ height: '80%' }}></div>
+                      <div className="bar" style={{ height: '70%' }}></div>
+                      <div className="bar" style={{ height: '90%' }}></div>
                     </div>
                   </div>
                   <p className="analytics-description">Track asset installation trends</p>
@@ -259,12 +282,12 @@ export default function RailwayMitraSahyog() {
                   </div>
                   <div className="chart-container chart-red">
                     <div className="bar-chart bar-chart-red">
-                      <div className="bar" style={{height: '30%'}}></div>
-                      <div className="bar" style={{height: '25%'}}></div>
-                      <div className="bar" style={{height: '35%'}}></div>
-                      <div className="bar" style={{height: '20%'}}></div>
-                      <div className="bar" style={{height: '28%'}}></div>
-                      <div className="bar" style={{height: '22%'}}></div>
+                      <div className="bar" style={{ height: '30%' }}></div>
+                      <div className="bar" style={{ height: '25%' }}></div>
+                      <div className="bar" style={{ height: '35%' }}></div>
+                      <div className="bar" style={{ height: '20%' }}></div>
+                      <div className="bar" style={{ height: '28%' }}></div>
+                      <div className="bar" style={{ height: '22%' }}></div>
                     </div>
                   </div>
                   <p className="analytics-description">Track equipment failures</p>
@@ -273,7 +296,7 @@ export default function RailwayMitraSahyog() {
             </div>
           </div>
         );
-      
+
       case 'inventory':
         // Inventory view: depot filters and stock tables.
         return (
@@ -320,16 +343,16 @@ export default function RailwayMitraSahyog() {
                     </tr>
                   </thead>
                   <tbody>
-                    {assetList.map((asset) => (
+                    {assets.map((asset) => (
                       <tr key={asset.id}>
-                        <td>{asset.id}</td>
-                        <td>{asset.name}</td>
+                        <td>{safeRender(asset.id)}</td>
+                        <td>{safeRender(asset.name || asset.asset_name)}</td>
                         <td>
                           <span className={`badge ${asset.status === 'Active' ? 'badge-green' : 'badge-orange'}`}>
-                            {asset.status}
+                            {safeRender(asset.status)}
                           </span>
                         </td>
-                        <td>{asset.location}</td>
+                        <td>{safeRender(asset.location)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -351,12 +374,12 @@ export default function RailwayMitraSahyog() {
                     </tr>
                   </thead>
                   <tbody>
-                    {crnHistory.map((record) => (
+                    {receipts.map((record) => (
                       <tr key={record.id}>
-                        <td className="font-medium">{record.id}</td>
-                        <td>{record.date}</td>
-                        <td>{record.items}</td>
-                        <td>{record.value}</td>
+                        <td className="font-medium">{safeRender(record.id)}</td>
+                        <td>{safeRender(record.date)}</td>
+                        <td>{safeRender(record.items)}</td>
+                        <td>{safeRender(record.value)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -379,13 +402,13 @@ export default function RailwayMitraSahyog() {
                     </tr>
                   </thead>
                   <tbody>
-                    {inventoryItems.map((item, idx) => (
+                    {assets.map((item, idx) => (
                       <tr key={idx}>
-                        <td>{item.partType}</td>
-                        <td>{item.vendor}</td>
-                        <td>{item.batch}</td>
-                        <td>{item.quantity}</td>
-                        <td>{item.warranty}</td>
+                        <td>{safeRender(item.partType || item.name)}</td>
+                        <td>{safeRender(item.vendor)}</td>
+                        <td>{safeRender(item.batch)}</td>
+                        <td>{safeRender(item.quantity)}</td>
+                        <td>{safeRender(item.warranty)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -394,7 +417,7 @@ export default function RailwayMitraSahyog() {
             </div>
           </div>
         );
-      
+
       case 'lifecycle':
         // Lifecycle view: manufacturing → installation timeline snapshots.
         return (
@@ -414,12 +437,12 @@ export default function RailwayMitraSahyog() {
                     </tr>
                   </thead>
                   <tbody>
-                    {lifecycleData.map((item, idx) => (
+                    {assets.map((item, idx) => (
                       <tr key={idx}>
-                        <td className="font-medium">{item.asset}</td>
-                        <td>{item.manufacture}</td>
-                        <td>{item.received}</td>
-                        <td>{item.installed}</td>
+                        <td className="font-medium">{item.asset || item.name}</td>
+                        <td>{item.manufacture || 'N/A'}</td>
+                        <td>{item.received || 'N/A'}</td>
+                        <td>{item.installed || item.installDate || 'N/A'}</td>
                         <td>
                           <span className={`badge ${item.status === 'Operational' ? 'badge-green' : 'badge-orange'}`}>
                             {item.status}
@@ -433,7 +456,7 @@ export default function RailwayMitraSahyog() {
             </div>
           </div>
         );
-      
+
       case 'track':
         // Track view: schematic and inspection log per section.
         return (
@@ -495,7 +518,7 @@ export default function RailwayMitraSahyog() {
                     </tr>
                   </thead>
                   <tbody>
-                    {sectionAssets.map((asset) => (
+                    {assets.filter(a => !selectedSection || a.section === selectedSection).map((asset) => (
                       <tr key={asset.id}>
                         <td className="font-medium">{asset.id}</td>
                         <td>{asset.name}</td>
@@ -523,7 +546,7 @@ export default function RailwayMitraSahyog() {
                     </tr>
                   </thead>
                   <tbody>
-                    {inspectionLogs.map((log, idx) => (
+                    {inspections.map((log, idx) => (
                       <tr key={idx}>
                         <td>{log.date}</td>
                         <td>{log.inspector}</td>
@@ -542,15 +565,15 @@ export default function RailwayMitraSahyog() {
             </div>
           </div>
         );
-      
+
       case 'inspection':
         // Inspection view: filterable audit log with photo modal.
-        const filteredRecords = inspectionRecords.filter(record => {
+        const filteredRecords = inspections.filter(record => {
           return (!filterDate || record.date === filterDate) &&
-                 (!filterAssetId || record.assetId.includes(filterAssetId)) &&
-                 (!filterVendor || record.vendor.toLowerCase().includes(filterVendor.toLowerCase())) &&
-                 (!filterSeverity || record.severity === filterSeverity) &&
-                 (!filterInspector || record.inspector.toLowerCase().includes(filterInspector.toLowerCase()));
+            (!filterAssetId || (record.assetId && record.assetId.includes(filterAssetId))) &&
+            (!filterVendor || (record.vendor && record.vendor.toLowerCase().includes(filterVendor.toLowerCase()))) &&
+            (!filterSeverity || record.severity === filterSeverity) &&
+            (!filterInspector || (record.inspector && record.inspector.toLowerCase().includes(filterInspector.toLowerCase())));
         });
 
         return (
@@ -653,19 +676,17 @@ export default function RailwayMitraSahyog() {
                         <td>{record.assetId}</td>
                         <td>{record.vendor}</td>
                         <td>
-                          <span className={`badge ${
-                            record.severity === 'Low' ? 'badge-green' :
+                          <span className={`badge ${record.severity === 'Low' ? 'badge-green' :
                             record.severity === 'Medium' ? 'badge-yellow' :
-                            'badge-red'
-                          }`}>
+                              'badge-red'
+                            }`}>
                             {record.severity}
                           </span>
                         </td>
                         <td>{record.inspector}</td>
                         <td>
-                          <span className={`badge ${
-                            record.status === 'Completed' ? 'badge-blue' : 'badge-orange'
-                          }`}>
+                          <span className={`badge ${record.status === 'Completed' ? 'badge-blue' : 'badge-orange'
+                            }`}>
                             {record.status}
                           </span>
                         </td>
@@ -676,6 +697,7 @@ export default function RailwayMitraSahyog() {
                               setShowPhotoViewer(true);
                             }}
                             className="link-button"
+                            style={{ cursor: 'pointer' }}
                           >
                             View ({record.photos})
                           </button>
@@ -719,7 +741,7 @@ export default function RailwayMitraSahyog() {
             )}
           </div>
         );
-      
+
       case 'warranty':
         // Warranty view: claim intake form and claim registry.
         return (
@@ -807,15 +829,14 @@ export default function RailwayMitraSahyog() {
                         <td>{claim.vendor}</td>
                         <td>{claim.issue}</td>
                         <td>
-                          <span className={`badge ${
-                            claim.status === 'Approved' ? 'badge-green' :
+                          <span className={`badge ${claim.status === 'Approved' ? 'badge-green' :
                             claim.status === 'Rejected' ? 'badge-red' :
-                            'badge-yellow'
-                          }`}>
+                              'badge-yellow'
+                            }`}>
                             {claim.status}
                           </span>
                         </td>
-                        <td>{claim.response}</td>
+                        <td>{claim.vendorResponse}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -824,7 +845,7 @@ export default function RailwayMitraSahyog() {
             </div>
           </div>
         );
-      
+
       case 'user':
         // Placeholder for future user-management interface.
         return (
@@ -844,11 +865,37 @@ export default function RailwayMitraSahyog() {
             </div>
           </div>
         );
-      
+
       default:
         return null;
     }
   };
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', backgroundColor: '#f9fafb' }}>
+        <RefreshCw size={48} className="animate-spin" style={{ color: '#2563eb', marginBottom: '1rem', animation: 'spin 1s linear infinite' }} />
+        <p style={{ color: '#4b5563', fontWeight: 500 }}>Loading Railway Data...</p>
+        <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } } .animate-spin { animation: spin 1s linear infinite; }`}</style>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', backgroundColor: '#f9fafb' }}>
+        <AlertTriangle size={48} style={{ color: '#dc2626', marginBottom: '1rem' }} />
+        <p style={{ color: '#dc2626', fontWeight: 500, fontSize: '1.25rem' }}>Error loading data</p>
+        <p style={{ color: '#6b7280', marginTop: '0.5rem' }}>{error}</p>
+        <button
+          onClick={fetchData}
+          style={{ marginTop: '1rem', padding: '0.5rem 1rem', backgroundColor: '#2563eb', color: 'white', borderRadius: '0.25rem', border: 'none', cursor: 'pointer' }}
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="app-container">
@@ -864,8 +911,8 @@ export default function RailwayMitraSahyog() {
             </button>
             {/* 🔥 Add Logo Here */}
             <div className="pic">
-              <img 
-                src={images} 
+              <img
+                src={images}
                 alt="Logo"
                 className="pics"
               />
@@ -873,7 +920,7 @@ export default function RailwayMitraSahyog() {
             </div>
             <h1 className="app-title">Railway Help</h1>
           </div>
-          <button 
+          <button
             onClick={() => setShowAccountMenu(!showAccountMenu)}
             className="account-button"
           >
@@ -883,7 +930,7 @@ export default function RailwayMitraSahyog() {
           {showAccountMenu && (
             <AccountMenu onClose={() => setShowAccountMenu(false)} />
           )}
-          
+
         </div>
       </header>
 
