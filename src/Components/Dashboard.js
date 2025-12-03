@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Menu, User, X, Package, MapPin, RefreshCw, ClipboardCheck, FileText, Users, Home, AlertTriangle, Search, Filter } from 'lucide-react';
 import './Dashboard.css'
 import images from "./images.png";
 import AccountMenu from "./Accountmenu";
 import { supabase } from "../supabaseClient";
+import { useNavigate } from 'react-router-dom';
 
 
 // Primary dashboard shell that orchestrates every view and interaction.
@@ -33,6 +34,25 @@ export default function RailwayMitraSahyog() {
   const [warrantyClaims, setWarrantyClaims] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate=useNavigate();
+    const [search, setSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
+
+  // Filtering logic
+  const filteredAssets = useMemo(() => {
+    return assets.filter((asset) => {
+      const matchesSearch =
+        asset.name?.toLowerCase().includes(search.toLowerCase()) ||
+        asset.asset_name?.toLowerCase().includes(search.toLowerCase()) ||
+        asset.id?.toString().includes(search);
+
+      const matchesStatus =
+        filterStatus === "" || asset.status === filterStatus;
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [assets, search, filterStatus]);
 
   useEffect(() => {
     fetchData();
@@ -133,7 +153,10 @@ export default function RailwayMitraSahyog() {
 
             {/* KPI snapshot across depots */}
             <div className="stats-grid">
-              <div className="stat-card stat-blue">
+              <div className="stat-card stat-blue " 
+                onClick={() => navigate("/assets", { state: { assets } })}
+                style={{cursor:"pointer"}}
+              >
                 <div className="stat-content">
                   <div className="stat-icon-wrapper">
                     <Package size={24} />
@@ -271,60 +294,130 @@ export default function RailwayMitraSahyog() {
                 ))}
               </div>
             </div>
-
+            
             {/* Quick asset list preview with search/filter icons */}
               <div className="card mb-6"> 
                 <div className="card-header">
                   <h3 className="section-title">Asset List</h3>
                   <div className="icon-buttons">
-                    <button className="icon-btn">
-                      <Search size={20} />
-                    </button>
-                    <button className="icon-btn">
-                      <Filter size={20} />
-                    </button>
+                       {/* Search Icon */}
+                      <div className="search-wrapper">
+                        <button className="icon-btn" onClick={() => {
+                          const box = document.getElementById("search-box");
+                          box.style.display = box.style.display === "flex" ? "none" : "flex";
+                        }}>
+                          <Search size={20} />
+                        </button>
+                      </div>
+
+                      {/* Filter Icon */}
+                      <button className="icon-btn" onClick={() => setShowFilterMenu(!showFilterMenu)}>
+                        <Filter size={20} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Search Input Box */}
+                  <div
+                    id="search-box"
+                    style={{
+                      display: "none",
+                      padding: "0.8rem",
+                      borderBottom: "1px solid #ddd",
+                    }}
+                  >
+                    <input
+                      type="text"
+                      placeholder="Search by asset ID or name..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "10px",
+                        borderRadius: "6px",
+                        border: "1px solid #ccc",
+                      }}
+                    />
+                  </div>
+
+                  {/* Filter Dropdown */}
+                  {showFilterMenu && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        right: "2rem",
+                        background: "white",
+                        border: "1px solid #ddd",
+                        padding: "10px",
+                        borderRadius: "6px",
+                        zIndex: 10,
+                      }}
+                    >
+                      <p style={{ marginBottom: "6px", fontWeight: 600 }}>
+                        Filter by Status
+                      </p>
+                      <select
+                        value={filterStatus}
+                        onChange={(e) => setFilterStatus(e.target.value)}
+                        style={{ padding: "6px", width: "170px" }}
+                      >
+                        <option value="">All</option>
+                        <option value="Active">Active</option>
+                        <option value="Operational">Operational</option>
+                        <option value="Maintenance">Maintenance</option>
+                        <option value="Decommissioned">Decommissioned</option>
+                      </select>
+                    </div>
+                  )}
+
+                  <div className="table-container">
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>Asset ID</th>
+                          <th>Name</th>
+                          <th>Status</th>
+                          <th>Location</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredAssets.length > 0 ? (
+                          filteredAssets.map((asset) => (
+                            <tr key={asset.id}>
+                              <td>{safeRender(asset.id)}</td>
+                              <td>{safeRender(asset.name || asset.asset_name)}</td>
+                              <td>
+                                <span
+                                  className={`badge ${
+                                    asset.status === "Active"
+                                      ? "badge-green"
+                                      : asset.status === "Operational"
+                                      ? "badge-orange"
+                                      : asset.status === "Maintenance"
+                                      ? "badge-yellow"
+                                      : asset.status === "Decommissioned"
+                                      ? "badge-red"
+                                      : "badge-gray"
+                                  }`}
+                                >
+                                  {safeRender(asset.status)}
+                                </span>
+                              </td>
+                              <td>{safeRender(asset.location)}</td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan="4" style={{ textAlign: "center", padding: "20px" }}>
+                              No matching assets found
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
 
-                <div className="table-container">
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>Asset ID</th>
-                        <th>Name</th>
-                        <th>Status</th>
-                        <th>Location</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {assets.map((asset) => (
-                        <tr key={asset.id}>
-                          <td>{safeRender(asset.id)}</td>
-                          <td>{safeRender(asset.name || asset.asset_name)}</td>
-                          <td>
-                            <span
-                              className={`badge ${
-                                asset.status === "Active"
-                                  ? "badge-green"
-                                  : asset.status === "Operational"
-                                  ? "badge-orange"
-                                  : asset.status === "Maintenance"
-                                  ? "badge-yellow"
-                                  : asset.status === "Decommissioned"
-                                  ? "badge-red"
-                                  : "badge-gray"
-                              }`}
-                            >
-                              {safeRender(asset.status)}
-                            </span>
-                          </td>
-                          <td>{safeRender(asset.location)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
             {/* CRN and GRN transaction history */}
             <div className="card mb-6">
               <h3 className="section-title">CRN/GRN History</h3>
