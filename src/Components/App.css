@@ -10,7 +10,7 @@
 .auth-bg {
   height: 100vh;
   width: 100vw;
-  background: white; /* WHITE BACKGROUND */
+  background: rgb(255, 255, 255); /* WHITE BACKGROUND */
   display: flex;
   justify-content: center;
   align-items: center;

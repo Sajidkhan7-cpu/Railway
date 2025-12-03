@@ -27,127 +27,127 @@ export default function AssetList({ safeRender = (v) => v }) {
   }, [assets, search, filterStatus]);
 
   return (
-    <div className="card mb-6">
-      <div className="card-header">
-        <h3 className="section-title">Asset List</h3>
+      <div className="card mb-6">
+        <div className="card-header">
+          <h3 className="section-title">Asset List</h3>
 
-        <div className="icon-buttons">
-          {/* Search Icon */}
-          <div className="search-wrapper">
-            <button className="icon-btn" onClick={() => {
-              const box = document.getElementById("search-box");
-              box.style.display = box.style.display === "flex" ? "none" : "flex";
-            }}>
-              <Search size={20} />
+          <div className="icon-buttons">
+            {/* Search Icon */}
+            <div className="search-wrapper">
+              <button className="icon-btn" onClick={() => {
+                const box = document.getElementById("search-box");
+                box.style.display = box.style.display === "flex" ? "none" : "flex";
+              }}>
+                <Search size={20} />
+              </button>
+            </div>
+
+            {/* Filter Icon */}
+            <button className="icon-btn" onClick={() => setShowFilterMenu(!showFilterMenu)}>
+              <Filter size={20} />
             </button>
           </div>
-
-          {/* Filter Icon */}
-          <button className="icon-btn" onClick={() => setShowFilterMenu(!showFilterMenu)}>
-            <Filter size={20} />
-          </button>
         </div>
-      </div>
 
-      {/* Search Input Box */}
-      <div
-        id="search-box"
-        style={{
-          display: "none",
-          padding: "0.8rem",
-          borderBottom: "1px solid #ddd",
-        }}
-      >
-        <input
-          type="text"
-          placeholder="Search by asset ID or name..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{
-            width: "100%",
-            padding: "10px",
-            borderRadius: "6px",
-            border: "1px solid #ccc",
-          }}
-        />
-      </div>
-
-      {/* Filter Dropdown */}
-      {showFilterMenu && (
+        {/* Search Input Box */}
         <div
+          id="search-box"
           style={{
-            position: "absolute",
-            right: "2rem",
-            background: "white",
-            border: "1px solid #ddd",
-            padding: "10px",
-            borderRadius: "6px",
-            zIndex: 10,
+            display: "none",
+            padding: "0.8rem",
+            borderBottom: "1px solid #ddd",
           }}
         >
-          <p style={{ marginBottom: "6px", fontWeight: 600 }}>
-            Filter by Status
-          </p>
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            style={{ padding: "6px", width: "170px" }}
-          >
-            <option value="">All</option>
-            <option value="Active">Active</option>
-            <option value="Operational">Operational</option>
-            <option value="Maintenance">Maintenance</option>
-            <option value="Decommissioned">Decommissioned</option>
-          </select>
+          <input
+            type="text"
+            placeholder="Search by asset ID or name..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "10px",
+              borderRadius: "6px",
+              border: "1px solid #ccc",
+            }}
+          />
         </div>
-      )}
 
-      <div className="table-container">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Asset ID</th>
-              <th>Name</th>
-              <th>Status</th>
-              <th>Location</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredAssets.length > 0 ? (
-              filteredAssets.map((asset) => (
-                <tr key={asset.id}>
-                  <td>{safeRender(asset.id)}</td>
-                  <td>{safeRender(asset.name || asset.asset_name)}</td>
-                  <td>
-                    <span
-                      className={`badge ${
-                        asset.status === "Active"
-                          ? "badge-green"
-                          : asset.status === "Operational"
-                          ? "badge-orange"
-                          : asset.status === "Maintenance"
-                          ? "badge-yellow"
-                          : asset.status === "Decommissioned"
-                          ? "badge-red"
-                          : "badge-gray"
-                      }`}
-                    >
-                      {safeRender(asset.status)}
-                    </span>
-                  </td>
-                  <td>{safeRender(asset.location)}</td>
-                </tr>
-              ))
-            ) : (
+        {/* Filter Dropdown */}
+        {showFilterMenu && (
+          <div
+            style={{
+              position: "absolute",
+              right: "2rem",
+              background: "white",
+              border: "1px solid #ddd",
+              padding: "10px",
+              borderRadius: "6px",
+              zIndex: 10,
+            }}
+          >
+            <p style={{ marginBottom: "6px", fontWeight: 600 }}>
+              Filter by Status
+            </p>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              style={{ padding: "6px", width: "170px" }}
+            >
+              <option value="">All</option>
+              <option value="Active">Active</option>
+              <option value="Operational">Operational</option>
+              <option value="Maintenance">Maintenance</option>
+              <option value="Decommissioned">Decommissioned</option>
+            </select>
+          </div>
+        )}
+
+        <div className="table-container">
+          <table className="data-table">
+            <thead>
               <tr>
-                <td colSpan="4" style={{ textAlign: "center", padding: "20px" }}>
-                  No matching assets found
-                </td>
+                <th>Asset ID</th>
+                <th>Name</th>
+                <th>Status</th>
+                <th>Location</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filteredAssets.length > 0 ? (
+                filteredAssets.map((asset) => (
+                  <tr key={asset.id}>
+                    <td>{safeRender(asset.id)}</td>
+                    <td>{safeRender(asset.name || asset.asset_name)}</td>
+                    <td>
+                      <span
+                        className={`badge ${
+                          asset.status === "Active"
+                            ? "badge-green"
+                            : asset.status === "Operational"
+                            ? "badge-orange"
+                            : asset.status === "Maintenance"
+                            ? "badge-yellow"
+                            : asset.status === "Decommissioned"
+                            ? "badge-red"
+                            : "badge-gray"
+                        }`}
+                      >
+                        {safeRender(asset.status)}
+                      </span>
+                    </td>
+                    <td>{safeRender(asset.location)}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="4" style={{ textAlign: "center", padding: "20px" }}>
+                    No matching assets found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
   );
 }
