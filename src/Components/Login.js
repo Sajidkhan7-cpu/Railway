@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Mail, Lock, User, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react"; // Only toggle icons kept
 import "./App.css";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
@@ -14,7 +14,6 @@ export default function Login() {
   const [isResetMode, setIsResetMode] = useState(false);
   const [user] = useState(null);
 
-
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -23,7 +22,7 @@ export default function Login() {
     newPassword: "",
   });
 
-  // Redirect to dashboard if already logged in
+  // Redirect to dashboard if logged in
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate("/dashboard");
@@ -73,6 +72,7 @@ export default function Login() {
           password: formData.password,
           options: { data: { full_name: formData.name } },
         });
+
         if (error) throw error;
         alert("Account created successfully! Please Login.");
         setIsLogin(true);
@@ -90,11 +90,13 @@ export default function Login() {
       return;
     }
     setLoading(true);
+
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(
         formData.email,
         { redirectTo: window.location.origin + "/#type=recovery" }
       );
+
       if (error) throw error;
       alert("Password reset email sent!");
     } catch (err) {
@@ -109,9 +111,6 @@ export default function Login() {
 
   return (
     <div className="auth-bg">
-      <div className="blur-circle circle1"></div>
-      <div className="blur-circle circle2"></div>
-
       <div className="auth-wrapper">
         <div className="auth-card">
           <div className="auth-header">
@@ -123,7 +122,7 @@ export default function Login() {
               {isResetMode
                 ? "Reset Password"
                 : isLogin
-                ? "Welcome Back!"
+                ? "Welcome !"
                 : "Create Account"}
             </h1>
             <p>
@@ -140,7 +139,6 @@ export default function Login() {
               <div className="form-group">
                 <label>Full Name</label>
                 <div className="input-container">
-                  <User className="input-icon" />
                   <input
                     type="text"
                     name="name"
@@ -157,7 +155,6 @@ export default function Login() {
               <>
                 <label>New Password</label>
                 <div className="input-container">
-                  <Lock className="input-icon" />
                   <input
                     type="password"
                     name="newPassword"
@@ -173,7 +170,6 @@ export default function Login() {
                 <div className="form-group">
                   <label>Email Address</label>
                   <div className="input-container">
-                    <Mail className="input-icon" />
                     <input
                       type="email"
                       name="email"
@@ -188,7 +184,6 @@ export default function Login() {
                 <div className="form-group">
                   <label>Password</label>
                   <div className="input-container">
-                    <Lock className="input-icon" />
                     <input
                       type={showPassword ? "text" : "password"}
                       name="password"
@@ -211,7 +206,6 @@ export default function Login() {
                   <div className="form-group">
                     <label>Confirm Password</label>
                     <div className="input-container">
-                      <Lock className="input-icon" />
                       <input
                         type={showPassword ? "text" : "password"}
                         name="confirmPassword"
@@ -269,4 +263,3 @@ export default function Login() {
     </div>
   );
 }
-
