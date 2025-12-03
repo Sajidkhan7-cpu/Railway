@@ -1481,11 +1481,12 @@ body {
   font-weight: 600;
   color: white;
 }
-.badge-green { background: #2ecc71; }
-.badge-orange { background: #f39c12; }
+.badge-green { background: #11ce60; }
+.badge-orange { background: #fba925; }
 .badge-yellow { background: #f1c40f; color: black; }
 .badge-red { background: #e74c3c; }
 .badge-gray { background: #7f8c8d; }
+.badge-blue { background: #2363ed; }
 
 .form-container {
   max-width: 420px;
