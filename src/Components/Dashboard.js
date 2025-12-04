@@ -30,7 +30,7 @@ export default function RailwayMitraSahyog() {
   const [receipts, setReceipts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const navigate=useNavigate();
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [showFilterMenu, setShowFilterMenu] = useState(false);
@@ -52,11 +52,11 @@ export default function RailwayMitraSahyog() {
 
   //sidebar
   useEffect(() => {
-        const handleResize = () => {
-          if (window.innerWidth >= 1024) setSidebarOpen(true);
-        };
-        window.addEventListener("resize", handleResize);
-        return () => window.removeEventListener("resize", handleResize);
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) setSidebarOpen(true);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   useEffect(() => {
@@ -94,7 +94,49 @@ export default function RailwayMitraSahyog() {
         .from('receipts')
         .select('*');
       if (receiptsError) throw receiptsError;
-      if (alertsData) setAlerts(alertsData);
+
+      // --- Warranty Check Logic ---
+      const today = new Date().toISOString().split('T')[0];
+      const newAlerts = [];
+
+      if (assetsData) {
+        for (const asset of assetsData) {
+          if (asset.warranty === today) {
+            // Check if alert already exists to prevent duplicates
+            const alreadyAlerted = alertsData?.some(alert =>
+              (alert.asset_id === asset.id) || // Check by ID if column exists
+              (alert.message.includes(asset.id) && alert.date === today && alert.severity === 'Critical') // Fallback check
+            );
+
+            if (!alreadyAlerted) {
+              const newAlert = {
+                message: `Warranty Expiration: ${asset.name || 'Asset'} (ID: ${asset.id})`,
+                severity: 'Critical',
+                date: today,
+                active: true,
+                asset_id: asset.id // Will be ignored by Supabase if column doesn't exist
+              };
+
+              // Insert into Supabase
+              const { data: insertedAlert, error: insertError } = await supabase
+                .from('alerts')
+                .insert([newAlert])
+                .select();
+
+              if (!insertError && insertedAlert) {
+                newAlerts.push(insertedAlert[0]);
+              } else if (insertError) {
+                console.error("Error creating warranty alert:", insertError);
+              }
+            }
+          }
+        }
+      }
+
+      // Update state
+      if (alertsData) {
+        setAlerts([...alertsData, ...newAlerts]);
+      }
       if (eventsData) setEvents(eventsData);
       if (inspectionsData) setInspections(inspectionsData);
       if (assetsData) setAssets(assetsData);
@@ -145,9 +187,9 @@ export default function RailwayMitraSahyog() {
 
             {/* KPI snapshot across depots */}
             <div className="stats-grid">
-              <div className="stat-card stat-blue " 
+              <div className="stat-card stat-blue "
                 onClick={() => navigate("/assets", { state: { assets } })}
-                style={{cursor:"pointer"}}
+                style={{ cursor: "pointer" }}
               >
                 <div className="stat-content">
                   <div className="stat-icon-wrapper">
@@ -159,7 +201,7 @@ export default function RailwayMitraSahyog() {
                   </div>
                 </div>
               </div>
-    
+
               <div className="stat-card stat-purple">
                 <div className="stat-content">
                   <div className="stat-icon-wrapper">
@@ -186,7 +228,7 @@ export default function RailwayMitraSahyog() {
 
               <div className="stat-card stat-orange"
                 onClick={() => navigate("/alerts", { state: { alerts } })}
-                style={{cursor:"pointer"}}
+                style={{ cursor: "pointer" }}
               >
                 <div className="stat-content">
                   <div className="stat-icon-wrapper">
@@ -275,127 +317,126 @@ export default function RailwayMitraSahyog() {
             <h2 className="page-title">Inventory Management</h2>
 
             {/* Quick asset list preview with search/filter icons */}
-              <div className="card mb-6"> 
-                <div className="card-header">
-                  <h3 className="section-title">Asset List</h3>
-                  <div className="icon-buttons">
-                       {/* Search Icon */}
-                      <div className="search-wrapper">
-                        <button className="icon-btn" onClick={() => {
-                          const box = document.getElementById("search-box");
-                          box.style.display = box.style.display === "flex" ? "none" : "flex";
-                        }}>
-                          <Search size={20} />
-                        </button>
-                      </div>
-
-                      {/* Filter Icon */}
-                      <button className="icon-btn" onClick={() => setShowFilterMenu(!showFilterMenu)}>
-                        <Filter size={20} />
-                      </button>
-                    </div>
+            <div className="card mb-6">
+              <div className="card-header">
+                <h3 className="section-title">Asset List</h3>
+                <div className="icon-buttons">
+                  {/* Search Icon */}
+                  <div className="search-wrapper">
+                    <button className="icon-btn" onClick={() => {
+                      const box = document.getElementById("search-box");
+                      box.style.display = box.style.display === "flex" ? "none" : "flex";
+                    }}>
+                      <Search size={20} />
+                    </button>
                   </div>
 
-                  {/* Search Input Box */}
-                  <div
-                    id="search-box"
-                    style={{
-                      display: "none",
-                      padding: "0.8rem",
-                      borderBottom: "1px solid #ddd",
-                    }}
+                  {/* Filter Icon */}
+                  <button className="icon-btn" onClick={() => setShowFilterMenu(!showFilterMenu)}>
+                    <Filter size={20} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Search Input Box */}
+              <div
+                id="search-box"
+                style={{
+                  display: "none",
+                  padding: "0.8rem",
+                  borderBottom: "1px solid #ddd",
+                }}
+              >
+                <input
+                  type="text"
+                  placeholder="Search by asset ID or name..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "10px",
+                    borderRadius: "6px",
+                    border: "1px solid #ccc",
+                  }}
+                />
+              </div>
+
+              {/* Filter Dropdown */}
+              {showFilterMenu && (
+                <div
+                  style={{
+                    position: "absolute",
+                    right: "2rem",
+                    background: "white",
+                    border: "1px solid #ddd",
+                    padding: "10px",
+                    borderRadius: "6px",
+                    zIndex: 10,
+                  }}
+                >
+                  <p style={{ marginBottom: "6px", fontWeight: 600 }}>
+                    Filter by Status
+                  </p>
+                  <select
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    style={{ padding: "6px", width: "170px" }}
                   >
-                    <input
-                      type="text"
-                      placeholder="Search by asset ID or name..."
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      style={{
-                        width: "100%",
-                        padding: "10px",
-                        borderRadius: "6px",
-                        border: "1px solid #ccc",
-                      }}
-                    />
-                  </div>
+                    <option value="">All</option>
+                    <option value="Active">Active</option>
+                    <option value="Operational">Operational</option>
+                    <option value="Maintenance">Maintenance</option>
+                    <option value="Decommissioned">Decommissioned</option>
+                  </select>
+                </div>
+              )}
 
-                  {/* Filter Dropdown */}
-                  {showFilterMenu && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        right: "2rem",
-                        background: "white",
-                        border: "1px solid #ddd",
-                        padding: "10px",
-                        borderRadius: "6px",
-                        zIndex: 10,
-                      }}
-                    >
-                      <p style={{ marginBottom: "6px", fontWeight: 600 }}>
-                        Filter by Status
-                      </p>
-                      <select
-                        value={filterStatus}
-                        onChange={(e) => setFilterStatus(e.target.value)}
-                        style={{ padding: "6px", width: "170px" }}
-                      >
-                        <option value="">All</option>
-                        <option value="Active">Active</option>
-                        <option value="Operational">Operational</option>
-                        <option value="Maintenance">Maintenance</option>
-                        <option value="Decommissioned">Decommissioned</option>
-                      </select>
-                    </div>
-                  )}
-
-                  <div className="table-container">
-                    <table className="data-table">
-                      <thead>
-                        <tr>
-                          <th>Asset ID</th>
-                          <th>Name</th>
-                          <th>Status</th>
-                          <th>Location</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredAssets.length > 0 ? (
-                          filteredAssets.map((asset) => (
-                            <tr key={asset.id}>
-                              <td>{safeRender(asset.id)}</td>
-                              <td>{safeRender(asset.name || asset.asset_name)}</td>
-                              <td>
-                                <span
-                                  className={`badge ${
-                                    asset.status === "Active"
-                                      ? "badge-green"
-                                      : asset.status === "Operational"
-                                      ? "badge-orange"
-                                      : asset.status === "Maintenance"
-                                      ? "badge-yellow"
-                                      : asset.status === "Decommissioned"
+              <div className="table-container">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Asset ID</th>
+                      <th>Name</th>
+                      <th>Status</th>
+                      <th>Location</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredAssets.length > 0 ? (
+                      filteredAssets.map((asset) => (
+                        <tr key={asset.id}>
+                          <td>{safeRender(asset.id)}</td>
+                          <td>{safeRender(asset.name || asset.asset_name)}</td>
+                          <td>
+                            <span
+                              className={`badge ${asset.status === "Active"
+                                ? "badge-green"
+                                : asset.status === "Operational"
+                                  ? "badge-orange"
+                                  : asset.status === "Maintenance"
+                                    ? "badge-yellow"
+                                    : asset.status === "Decommissioned"
                                       ? "badge-red"
                                       : "badge-gray"
-                                  }`}
-                                >
-                                  {safeRender(asset.status)}
-                                </span>
-                              </td>
-                              <td>{safeRender(asset.location)}</td>
-                            </tr>
-                          ))
-                        ) : (
-                          <tr>
-                            <td colSpan="4" style={{ textAlign: "center", padding: "20px" }}>
-                              No matching assets found
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                                }`}
+                            >
+                              {safeRender(asset.status)}
+                            </span>
+                          </td>
+                          <td>{safeRender(asset.location)}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="4" style={{ textAlign: "center", padding: "20px" }}>
+                          No matching assets found
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
 
             {/*Receipt transaction history */}
             <div className="card mb-6">
@@ -481,7 +522,7 @@ export default function RailwayMitraSahyog() {
                         <td>{item.received || 'N/A'}</td>
                         <td>{item.installed || item.installDate || 'N/A'}</td>
                         <td>
-                          <span className={`badge ${item.status === 'Operational' ? 'badge-green' : 
+                          <span className={`badge ${item.status === 'Operational' ? 'badge-green' :
                             item.status === 'Decommissioned' ? 'badge-red' : 'badge-orange'}`}>
                             {item.status}
                           </span>
@@ -590,8 +631,8 @@ export default function RailwayMitraSahyog() {
                         <td>{log.inspector}</td>
                         <td>{log.assetId}</td>
                         <td>
-                          <span className={`badge ${log.status === 'Pass' ? 'badge-yellow' : 
-                            log.status === 'Fail' ? 'badge-red': 'badge-green'}`}>
+                          <span className={`badge ${log.status === 'Pass' ? 'badge-yellow' :
+                            log.status === 'Fail' ? 'badge-red' : 'badge-green'}`}>
                             {log.status}
                           </span>
                         </td>
@@ -724,9 +765,9 @@ export default function RailwayMitraSahyog() {
                         </td>
                         <td>{record.inspector}</td>
                         <td>
-                          <span className={`badge ${record.status === 'Completed' ? 'badge-blue' : 
-                          record.status === 'Fail' ? 'badge-orange': 
-                          'badge-green'
+                          <span className={`badge ${record.status === 'Completed' ? 'badge-blue' :
+                            record.status === 'Fail' ? 'badge-orange' :
+                              'badge-green'
                             }`}>
                             {record.status}
                           </span>
@@ -782,8 +823,8 @@ export default function RailwayMitraSahyog() {
             )}
           </div>
         );
-        default:
-      return null;
+      default:
+        return null;
     }
   };
 
