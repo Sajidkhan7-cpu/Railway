@@ -50,6 +50,15 @@ export default function RailwayMitraSahyog() {
     });
   }, [assets, search, filterStatus]);
 
+  //sidebar
+  useEffect(() => {
+        const handleResize = () => {
+          if (window.innerWidth >= 1024) setSidebarOpen(true);
+        };
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -387,7 +396,7 @@ export default function RailwayMitraSahyog() {
 
             {/* CRN and GRN transaction history */}
             <div className="card mb-6">
-              <h3 className="section-title">CRN/GRN History</h3>
+              <h3 className="section-title">Receipt History</h3>
               <div className="table-container">
                 <table className="data-table">
                   <thead>
