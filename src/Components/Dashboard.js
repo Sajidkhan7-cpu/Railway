@@ -394,7 +394,7 @@ export default function RailwayMitraSahyog() {
                   </div>
                 </div>
 
-            {/* CRN and GRN transaction history */}
+            {/*Receipt transaction history */}
             <div className="card mb-6">
               <h3 className="section-title">Receipt History</h3>
               <div className="table-container">
@@ -831,7 +831,7 @@ export default function RailwayMitraSahyog() {
               />
 
             </div>
-            <h1 className="app-title">Smart Track</h1>
+            <h1 className="app-title">Smart Track </h1>
           </div>
           <button
             onClick={() => setShowAccountMenu(!showAccountMenu)}
