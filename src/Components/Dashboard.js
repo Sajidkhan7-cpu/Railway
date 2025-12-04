@@ -35,7 +35,7 @@ export default function RailwayMitraSahyog() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate=useNavigate();
-    const [search, setSearch] = useState("");
+  const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [showFilterMenu, setShowFilterMenu] = useState(false);
 
@@ -89,20 +89,13 @@ export default function RailwayMitraSahyog() {
         .from('receipts')
         .select('*');
       if (receiptsError) throw receiptsError;
-
-      const { data: warrantyData, error: warrantyError } = await supabase
-        .from('warranty_claims')
-        .select('*, assetId:asset_id, vendorResponse:vendor_response');
-      if (warrantyError) throw warrantyError;
-
       if (alertsData) setAlerts(alertsData);
       if (eventsData) setEvents(eventsData);
       if (inspectionsData) setInspections(inspectionsData);
       if (assetsData) setAssets(assetsData);
       if (receiptsData) setReceipts(receiptsData);
-      if (warrantyData) setWarrantyClaims(warrantyData);
 
-      console.log("Fetched Data:", { alertsData, eventsData, inspectionsData, assetsData, receiptsData, warrantyData });
+      console.log("Fetched Data:", { alertsData, eventsData, inspectionsData, assetsData, receiptsData });
 
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -129,11 +122,8 @@ export default function RailwayMitraSahyog() {
   const menuItems = [
     { id: 'home', name: 'Home', icon: Home },
     { id: 'inventory', name: 'Inventory', icon: Package },
-    { id: 'track', name: 'Track Section', icon: MapPin },
     { id: 'lifecycle', name: 'Asset Life Cycle View', icon: RefreshCw },
-    { id: 'inspection', name: 'Inspection Page', icon: ClipboardCheck },
-    { id: 'warranty', name: 'Warranty Claims', icon: FileText },
-    { id: 'user', name: 'User Management', icon: Users }
+    { id: 'inspection', name: 'Inspection Page', icon: ClipboardCheck }
   ];
 
   // Reference data for depot filters and mock datasets below.
@@ -278,22 +268,6 @@ export default function RailwayMitraSahyog() {
         return (
           <div>
             <h2 className="page-title">Inventory Management</h2>
-
-            {/* Depot selector to scope data */}
-            <div className="card mb-6">
-              <h3 className="section-title">Depot Selection</h3>
-              <div className="button-group">
-                {depots.map((depot, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setSelectedDepot(depot)}
-                    className={`btn ${selectedDepot === depot ? 'btn-active' : 'btn-inactive'}`}
-                  >
-                    {depot}
-                  </button>
-                ))}
-              </div>
-            </div>
             
             {/* Quick asset list preview with search/filter icons */}
               <div className="card mb-6"> 
@@ -803,133 +777,8 @@ export default function RailwayMitraSahyog() {
             )}
           </div>
         );
-
-      case 'warranty':
-        // Warranty view: claim intake form and claim registry.
-        return (
-          <div>
-            <h2 className="page-title">Warranty Claims</h2>
-
-            {/* Quick action to surface the claim form */}
-            <div className="mb-6">
-              <button
-                onClick={() => setShowClaimForm(!showClaimForm)}
-                className="btn-primary"
-              >
-                {showClaimForm ? 'Cancel' : '+ Create New Claim'}
-              </button>
-            </div>
-
-            {/* Inline form for drafting a fresh warranty claim */}
-            {showClaimForm && (
-              <div className="card mb-6">
-                <h3 className="section-title">Create Warranty Claim</h3>
-                <div className="form-grid">
-                  <div>
-                    <label className="input-label">Asset ID</label>
-                    <input
-                      type="text"
-                      placeholder="Enter asset ID"
-                      className="form-input"
-                    />
-                  </div>
-                  <div>
-                    <label className="input-label">Vendor</label>
-                    <select className="form-input">
-                      <option>Select vendor</option>
-                      <option>TechRail Inc</option>
-                      <option>SafeTrack Ltd</option>
-                      <option>PowerTech Co</option>
-                      <option>SecureRail</option>
-                    </select>
-                  </div>
-                  <div className="form-full-width">
-                    <label className="input-label">Issue Description</label>
-                    <textarea
-                      placeholder="Describe the issue..."
-                      rows="3"
-                      className="form-input"
-                    ></textarea>
-                  </div>
-                  <div className="form-full-width">
-                    <label className="input-label">Upload Documents</label>
-                    <div className="upload-area">
-                      <FileText className="upload-icon" size={32} />
-                      <p className="upload-text">Click to upload or drag and drop</p>
-                      <p className="upload-subtext">PDF, DOC, Images (Max 10MB)</p>
-                    </div>
-                  </div>
-                </div>
-                <button className="btn-success">
-                  Submit Claim
-                </button>
-              </div>
-            )}
-
-            {/* Master list of all warranty claims */}
-            <div className="card">
-              <h3 className="section-title">All Claims</h3>
-              <div className="table-container">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Claim ID</th>
-                      <th>Date</th>
-                      <th>Asset ID</th>
-                      <th>Vendor</th>
-                      <th>Issue</th>
-                      <th>Status</th>
-                      <th>Vendor Response</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {warrantyClaims.map((claim) => (
-                      <tr key={claim.id}>
-                        <td className="font-medium">{claim.id}</td>
-                        <td>{claim.date}</td>
-                        <td>{claim.assetId}</td>
-                        <td>{claim.vendor}</td>
-                        <td>{claim.issue}</td>
-                        <td>
-                          <span className={`badge ${claim.status === 'Approved' ? 'badge-green' :
-                            claim.status === 'Rejected' ? 'badge-red' :
-                              'badge-yellow'
-                            }`}>
-                            {claim.status}
-                          </span>
-                        </td>
-                        <td>{claim.vendorResponse}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        );
-
-      case 'user':
-        // Placeholder for future user-management interface.
-        return (
-          <div>
-            <h2 className="page-title">User Management</h2>
-            {/* Placeholder block until user tooling ships */}
-            <div className="card">
-              <div className="coming-soon">
-                <div className="coming-soon-content">
-                  <div className="coming-soon-icon">
-                    <RefreshCw size={64} />
-                  </div>
-                  <h3 className="coming-soon-title">Coming Soon...</h3>
-                  <p className="coming-soon-text">User management features will be available soon.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-
-      default:
-        return null;
+        default:
+      return null;
     }
   };
 
