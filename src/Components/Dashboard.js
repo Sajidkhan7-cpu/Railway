@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Menu, User, X, Package, MapPin, RefreshCw, ClipboardCheck, FileText, Users, Home, AlertTriangle, Search, Filter } from 'lucide-react';
 import './Dashboard.css'
-import images from "./images.png";
+import image from "./image.png";
 import AccountMenu from "./Accountmenu";
 import { supabase } from "../supabaseClient";
 import { useNavigate } from 'react-router-dom';
@@ -974,13 +974,13 @@ export default function RailwayMitraSahyog() {
             {/* 🔥 Add Logo Here */}
             <div className="pic">
               <img
-                src={images}
+                src={image}
                 alt="Logo"
                 className="pics"
               />
 
             </div>
-            <h1 className="app-title">Railway Help</h1>
+            <h1 className="app-title">Smart Track</h1>
           </div>
           <button
             onClick={() => setShowAccountMenu(!showAccountMenu)}

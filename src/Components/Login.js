@@ -3,7 +3,7 @@ import { Eye, EyeOff } from "lucide-react"; // Only toggle icons kept
 import "./App.css";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
-import images from "./images.png";
+import images from "./images.jpg";
 
 export default function Login() {
   const navigate = useNavigate();
