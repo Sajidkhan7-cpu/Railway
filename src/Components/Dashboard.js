@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Menu, User, X, Package, MapPin, RefreshCw, ClipboardCheck, FileText, Users, Home, AlertTriangle, Search, Filter } from 'lucide-react';
+import { Menu, User, X, Package, MapPin, RefreshCw, ClipboardCheck, Home, AlertTriangle, Search, Filter } from 'lucide-react';
 import './Dashboard.css'
 import image from "./image.png";
 import AccountMenu from "./Accountmenu";
@@ -12,18 +12,15 @@ export default function RailwayMitraSahyog() {
   // View-layer state for navigation, filters, and contextual modals.
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('home');
-  const [selectedDepot, setSelectedDepot] = useState('all');
   const [selectedSection, setSelectedSection] = useState('Section A');
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   const [showPhotoViewer, setShowPhotoViewer] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
-  const [showClaimForm, setShowClaimForm] = useState(false);
   const [filterDate, setFilterDate] = useState('');
   const [filterAssetId, setFilterAssetId] = useState('');
   const [filterVendor, setFilterVendor] = useState('');
   const [filterSeverity, setFilterSeverity] = useState('');
   const [filterInspector, setFilterInspector] = useState('');
-
 
   // Supabase Data States
   const [alerts, setAlerts] = useState([]);
@@ -31,7 +28,6 @@ export default function RailwayMitraSahyog() {
   const [inspections, setInspections] = useState([]);
   const [assets, setAssets] = useState([]);
   const [receipts, setReceipts] = useState([]);
-  const [warrantyClaims, setWarrantyClaims] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate=useNavigate();
@@ -268,7 +264,7 @@ export default function RailwayMitraSahyog() {
         return (
           <div>
             <h2 className="page-title">Inventory Management</h2>
-            
+
             {/* Quick asset list preview with search/filter icons */}
               <div className="card mb-6"> 
                 <div className="card-header">
