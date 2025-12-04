@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./Components/Login";
 import Dashboard from "./Components/Dashboard";
 import AssetList from "./Components/AssetList";
+import AlertsList from "./Components/AlertsList";
 import ProfileSettings from "./Components/ProfileSettings";
 import ChangeEmail from "./Components/ChangeEmail";
 
@@ -17,6 +18,9 @@ export default function App() {
 
         {/* AssetList route */}
         <Route path="/assets" element={<AssetList/>} />
+
+        {/* AssetList route */}
+        <Route path="/alerts" element={<AlertsList/>} />
 
         {/* ProfileSetting */}
         <Route path="/profile-settings" element={<ProfileSettings />} />

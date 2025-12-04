@@ -184,7 +184,10 @@ export default function RailwayMitraSahyog() {
                 </div>
               </div>
 
-              <div className="stat-card stat-orange">
+              <div className="stat-card stat-orange"
+                onClick={() => navigate("/alerts", { state: { alerts } })}
+                style={{cursor:"pointer"}}
+              >
                 <div className="stat-content">
                   <div className="stat-icon-wrapper">
                     <AlertTriangle size={24} />
