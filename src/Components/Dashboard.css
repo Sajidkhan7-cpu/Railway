@@ -157,19 +157,37 @@ body {
 
 
 
+/* Logo container */
 .pic {
   display: flex;
-  justify-content: left;
-  width: 70px;
-  margin-top: 4px;
-  margin-bottom: 4px;
-  
+  justify-content: flex-start;
+  align-items: center;
+  width: 100%;
+  margin: 4px 0;
 }
 
+/* Logo image */
 .pics {
-  width: 60px;
+  width: 100%;
+  max-width: 70px;   /* default size for mobile */
   height: auto;
+  border-radius: 10px;
 }
+
+/* Tablet */
+@media (min-width: 600px) {
+  .pics {
+    max-width: 85px;
+  }
+}
+
+/* Laptop / Desktop */
+@media (min-width: 1024px) {
+  .pics {
+    max-width: 100px;
+  }
+}
+
 
 /* Account Menu */
 .account-menu {
