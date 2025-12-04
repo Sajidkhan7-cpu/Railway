@@ -122,9 +122,6 @@ export default function RailwayMitraSahyog() {
     { id: 'inspection', name: 'Inspection Page', icon: ClipboardCheck }
   ];
 
-  // Reference data for depot filters and mock datasets below.
-  const depots = ['All Depots', 'Mumbai Central'];
-
   // Static list of schematic track segments.
   const trackSections = ['Section A', 'Section B', 'Section C', 'Section D'];
 
